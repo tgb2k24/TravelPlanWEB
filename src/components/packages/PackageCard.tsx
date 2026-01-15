@@ -1,5 +1,7 @@
+"use client";
 import Image from "next/image";
-import { Star, MapPin, Clock, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Star, MapPin, Clock, ArrowRight, CheckCircle2, ImageOff } from "lucide-react";
+import { useState } from "react";
 
 interface Package {
     id: string;
@@ -18,15 +20,27 @@ interface PackageCardProps {
 }
 
 export function PackageCard({ pkg }: PackageCardProps) {
+    const [imgError, setImgError] = useState(false);
+
     return (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg transition-all group flex flex-col h-full">
-            <div className="relative h-48 w-full overflow-hidden">
-                <Image
-                    src={pkg.image}
-                    alt={pkg.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
-                />
+            <div className="relative h-48 w-full overflow-hidden bg-slate-100">
+                {!imgError ? (
+                    <Image
+                        src={pkg.image}
+                        alt={pkg.title}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                        onError={() => setImgError(true)}
+                        unoptimized
+                    />
+                ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400">
+                        <ImageOff className="w-8 h-8 mb-2" />
+                        <span className="text-xs">Image not available</span>
+                    </div>
+                )}
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold text-slate-900 flex items-center shadow-sm">
                     <Star className="w-3 h-3 text-yellow-500 fill-yellow-500 mr-1" />
                     {pkg.rating}
@@ -60,7 +74,7 @@ export function PackageCard({ pkg }: PackageCardProps) {
                 <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
                     <div>
                         <p className="text-xs text-slate-400">Starting from</p>
-                        <p className="text-lg font-bold text-slate-900">₹ {pkg.price.toLocaleString()}</p>
+                        <p className="text-lg font-bold text-slate-900">₹ {pkg.price.toLocaleString('en-IN')}</p>
                     </div>
                     <button className="bg-white border border-primary text-primary hover:bg-primary hover:text-white transition-colors px-4 py-2 rounded-full text-sm font-bold flex items-center">
                         View Details <ArrowRight className="w-4 h-4 ml-1" />

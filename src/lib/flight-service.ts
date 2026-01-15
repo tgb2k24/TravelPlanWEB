@@ -13,9 +13,25 @@ function parseDuration(isoDuration: string) {
     return `${hours} ${minutes}`.trim();
 }
 
-export async function fetchFlights(from: string, to: string, date: string, passengers: number = 1, cabin: string = 'economy'): Promise<Flight[]> {
+export async function fetchFlights(from: string, to: string, date: string, passengers: number = 1, cabin: string = 'economy', returnDate?: string): Promise<Flight[]> {
     try {
         console.log(`Fetching flights: ${from} -> ${to} on ${date}`);
+        const slices = [
+            {
+                origin: from,
+                destination: to,
+                departure_date: date
+            }
+        ];
+
+        if (returnDate) {
+            slices.push({
+                origin: to,
+                destination: from,
+                departure_date: returnDate
+            });
+        }
+
         const response = await fetch(`${DUFFEL_API_URL}?return_offers=true`, {
             method: 'POST',
             headers: {
@@ -26,13 +42,7 @@ export async function fetchFlights(from: string, to: string, date: string, passe
             },
             body: JSON.stringify({
                 data: {
-                    slices: [
-                        {
-                            origin: from,
-                            destination: to,
-                            departure_date: date
-                        }
-                    ],
+                    slices: slices,
                     passengers: Array(passengers).fill({ type: 'adult' }),
                     cabin_class: cabin
                 }
@@ -56,7 +66,39 @@ export async function fetchFlights(from: string, to: string, date: string, passe
             const lastSegment = segments[segments.length - 1];
             const owner = offer.owner;
             const carrierCode = owner.iata_code || (firstSegment.operating_carrier ? firstSegment.operating_carrier.iata_code : "XX");
-            const logoUrl = owner.logo_symbol_url || `https://assets.duffel.com/img/airlines/for-light-background/${carrierCode}.svg`;
+            let logoUrl = owner.logo_symbol_url;
+            if (!logoUrl && carrierCode && carrierCode !== "XX") {
+                logoUrl = `https://assets.duffel.com/img/airlines/for-light-background/${carrierCode}.svg`;
+            }
+
+            let returnLeg = undefined;
+            if (offer.slices.length > 1) {
+                const returnSlice = offer.slices[1];
+                const returnSegments = returnSlice.segments;
+                const rFirst = returnSegments[0];
+                const rLast = returnSegments[returnSegments.length - 1];
+                const rCarrierCode = rFirst.operating_carrier ? rFirst.operating_carrier.iata_code : (owner.iata_code || "XX");
+
+                let rLogoUrl = undefined;
+                if (rCarrierCode === owner.iata_code && owner.logo_symbol_url) {
+                    rLogoUrl = owner.logo_symbol_url;
+                } else if (rCarrierCode && rCarrierCode !== "XX") {
+                    rLogoUrl = `https://assets.duffel.com/img/airlines/for-light-background/${rCarrierCode}.svg`;
+                }
+
+                returnLeg = {
+                    airline: owner.name,
+                    airlineCode: rCarrierCode,
+                    flightNumber: rFirst.operating_carrier_flight_number,
+                    from: returnSlice.origin.iata_code,
+                    to: returnSlice.destination.iata_code,
+                    departureTime: rFirst.departing_at,
+                    arrivalTime: rLast.arriving_at,
+                    duration: parseDuration(returnSlice.duration),
+                    stops: returnSegments.length - 1,
+                    airlineLogo: rLogoUrl
+                };
+            }
 
             return {
                 id: offer.id,
@@ -72,7 +114,8 @@ export async function fetchFlights(from: string, to: string, date: string, passe
                 price: convertToINR(parseFloat(offer.total_amount), offer.total_currency),
                 currency: "INR",
                 stops: segments.length - 1,
-                seatsAvailable: 9
+                seatsAvailable: 9,
+                returnLeg: returnLeg
             };
         });
     } catch (error) {

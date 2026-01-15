@@ -89,12 +89,12 @@ export function FlightSearchForm() {
                     <div className={cn("grid bg-white border border-slate-300 rounded-lg overflow-hidden", tripType === "roundTrip" ? "grid-cols-2 md:col-span-4" : "grid-cols-1 md:col-span-3")}>
                         <div className="p-3 border-r border-slate-300 hover:bg-blue-50 transition-colors relative group">
                             <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Departure</span>
-                            <input name="date" type="date" defaultValue={new Date().toISOString().split('T')[0]} className="w-full bg-transparent font-bold text-lg text-slate-800 outline-none" />
+                            <input name="date" type="date" defaultValue={new Date().toLocaleDateString('en-CA')} min={new Date().toLocaleDateString('en-CA')} className="w-full bg-transparent font-bold text-lg text-slate-800 outline-none" />
                         </div>
                         {tripType === "roundTrip" ? (
                             <div className="p-3 hover:bg-blue-50 transition-colors relative group">
                                 <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Return</span>
-                                <input name="returnDate" type="date" className="w-full bg-transparent font-bold text-lg text-slate-800 outline-none" />
+                                <input name="returnDate" type="date" min={new Date().toLocaleDateString('en-CA')} className="w-full bg-transparent font-bold text-lg text-slate-800 outline-none" />
                             </div>
                         ) : null}
                     </div>

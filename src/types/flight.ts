@@ -13,4 +13,16 @@ export interface Flight {
     stops: number;
     airlineLogo?: string;
     seatsAvailable: number;
+    returnLeg?: {
+        airline: string;
+        airlineCode: string;
+        flightNumber: string;
+        from: string;
+        to: string;
+        departureTime: string;
+        arrivalTime: string;
+        duration: string;
+        stops: number;
+        airlineLogo?: string;
+    };
 }

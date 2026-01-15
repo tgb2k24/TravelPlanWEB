@@ -10,21 +10,26 @@ export default async function FlightsPage({
 
     const from = (resolvedSearchParams?.from as string) || "DEL";
     const to = (resolvedSearchParams?.to as string) || "BOM";
+    const cabin = (resolvedSearchParams?.cabin as string) || "economy";
+    const passengers = parseInt((resolvedSearchParams?.passengers as string) || "1", 10);
+    const returnDate = (resolvedSearchParams?.returnDate as string);
 
-    // Ensure date is valid or default to today
+    // Ensure date is valid or default to today (in local time)
     let date = (resolvedSearchParams?.date as string);
-    if (!date) {
-        date = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA');
+
+    if (!date || date < today) {
+        date = today;
     }
 
-    const flights = await fetchFlights(from, to, date);
+    const flights = await fetchFlights(from, to, date, passengers, cabin, returnDate);
 
     return (
         <div className="bg-slate-50 min-h-screen pb-12">
             <div className="bg-blue-900 py-8">
                 <div className="container mx-auto px-4">
                     <h1 className="text-2xl text-white font-bold">Flights from {from} to {to}</h1>
-                    <p className="text-blue-200 text-sm">{date} | 1 Traveller | Economy</p>
+                    <p className="text-blue-200 text-sm">{date}{returnDate ? ` - ${returnDate}` : ''} | {passengers} Traveller(s) | {cabin.charAt(0).toUpperCase() + cabin.slice(1)}</p>
                 </div>
             </div>
 
